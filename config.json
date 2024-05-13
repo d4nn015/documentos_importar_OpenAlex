@@ -1,0 +1,6 @@
+{
+  "DEFAULT": {
+    "Url_bd": "mongodb://practicas:practicas24@totoro.unirioja.es,totoro2.unirioja.es,matute.unirioja.es,sancho.unirioja.es/practicas?authSource=practicas&replicaSet=dialnet-rs",
+    "Nombre_bd": "practicas"
+    }
+  }
