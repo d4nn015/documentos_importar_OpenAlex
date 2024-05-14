@@ -45,7 +45,7 @@ class OpenALex:
             self.descarga_por_institucion(id["affiliationId"])
 
         self.descarga_por_autores(autores)
-        self.mongo.guardar_fechadescarga(idCliente, self.trabajosEncontrados, self.trabajosActualizados, self.numeroTrabajosInsertados)
+        self.mongo.guardar_fechadescarga(idCliente, self.trabajosEncontrados, self.numeroTrabajosInsertados, self.trabajosActualizados)
 
         self.trabajosEncontrados = 0
         self.trabajosActualizados = 0
@@ -56,17 +56,17 @@ class OpenALex:
         self.buscar_docs(url, idInstitucion)
 
     def descarga_por_autores(self, autores):
-        for autor in autores:
+
+        listaIds = self.mongo.obtener_orcid_autor(autores)
+        for autor in listaIds:
             orcid = None
             for identificador in autor.get('identificadores', []):
                 if identificador.get('tipo') == "ORCID":
                     orcid = identificador.get('_id')
-                    print(orcid)
                     break
                 elif identificador.get('tipo') == "SCP":
                     scopus_id = identificador.get('_id')
                     orcid = self.buscar_orcid_con_scopus(scopus_id)
-                    print(orcid)
                     break
 
             if orcid:
