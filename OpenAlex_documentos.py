@@ -7,7 +7,7 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s',
                     filename=log_file,
                     filemode='a')
-
+logger = logging.getLogger('importar_documentos_OpenAlex')
 
 
 class OpenALex:
@@ -24,12 +24,17 @@ class OpenALex:
         self.trabajosActualizados = 0
         self.numeroTrabajosInsertados = 0
 
-
     def descargarTodo(self):
 
         clientes_ids = self.mongo.obtener_ids_clientes()
-        for id in clientes_ids:
-            self.descargarCliente(id)
+
+        try:
+            for id in clientes_ids:
+                logger.info(f"Descargando cliente con id : {id}")
+                self.descargarCliente(id)
+        except requests.exceptions.HTTPError as err:
+            logger.error(f"Limite de peticiones alcanzado : {err}")
+
 
     def descargarCliente(self, idCliente):
         resultado = self.mongo.obtener_configuarion_cliente(idCliente)
@@ -41,6 +46,10 @@ class OpenALex:
 
         self.descarga_por_autores(autores)
         self.mongo.guardar_fechadescarga(idCliente, self.trabajosEncontrados, self.trabajosActualizados, self.numeroTrabajosInsertados)
+
+        self.trabajosEncontrados = 0
+        self.trabajosActualizados = 0
+        self.numeroTrabajosInsertados = 0
 
     def descarga_por_institucion(self, idInstitucion):
         url = "https://api.openalex.org/works?filter=institutions.id:" + idInstitucion + "&page={}"
@@ -69,11 +78,10 @@ class OpenALex:
         data = requests.get(url).json()
         for autor in data['results']:
             if autor is None:
-                logging.error(f"No se encontró ORCID para el codigo Scopus:{idScopus}")
+                logger.debug(f"No se encontró ORCID para el codigo Scopus:{idScopus}")
                 return None
             else:
                 return autor['orcid']
-
 
     def buscar_docs(self, urlpagina, id):
         totalTrabajosProcesados = 0
@@ -82,7 +90,8 @@ class OpenALex:
 
         urlEncontrados = urlpagina.format(1)
         dataEncontrados = requests.get(urlEncontrados).json()
-        self.trabajosEncontrados += dataEncontrados['meta']['count']
+        encontrados = json.loads(json.dumps(dataEncontrados['meta']['count']))
+        self.trabajosEncontrados += encontrados
 
         for numeroPagina in range(1, numeroTotalPaginas + 1):
             try:
@@ -92,14 +101,12 @@ class OpenALex:
                 resultados_pagina = json.loads(json.dumps(data['results']))
                 totalTrabajosProcesados += self.recorrerInsertarTrabajos_porPagina(resultados_pagina)
             except requests.exceptions.RequestException as e:
-                logging.error(f"Error al realizar la solicitud de la pagina {numeroPagina} : {e}")
+                logger.error(f"Error al realizar la solicitud de la pagina {numeroPagina} : {e}")
                 continue
         if len(self.listaTrabajos) > 0:
             self.numeroTrabajosInsertados += len(self.listaTrabajos)
             self.mongo.insertar(self.listaTrabajos)
-        logging.info(f"Trabajos procesados con id {id} : {totalTrabajosProcesados}")
-
-
+        logger.info(f"Trabajos procesados con id {id} : {totalTrabajosProcesados}/{encontrados}")
 
     def recorrerInsertarTrabajos_porPagina(self, diccionario):
         contadorTrabajosProcesados = 0
@@ -111,12 +118,11 @@ class OpenALex:
                 diccionarioFinal = {"documento": trabajo, "fechaCrea": datetime.now(),
                                     "fechaModi": datetime.now(), "version": 0}
                 self.listaTrabajos.append(diccionarioFinal)
-                logging.info(f'work añadido a la lista con id: {trabajo["id"]}')
+                logger.debug(f'Trabajo añadido con id: {trabajo["id"]}')
                 if len(self.listaTrabajos) >= self.cicloInserciones:
                     self.numeroTrabajosInsertados += len(self.listaTrabajos)
                     self.mongo.insertar(self.listaTrabajos)
         return contadorTrabajosProcesados
-
 
     def numero_Total_Paginas(self, url):
         data = requests.get(url).json()
@@ -157,36 +163,6 @@ class OpenALex:
         return texto_reconstruido
 
 
-
 if __name__ == "__main__":
     op = OpenALex()
     op.descargarTodo()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
