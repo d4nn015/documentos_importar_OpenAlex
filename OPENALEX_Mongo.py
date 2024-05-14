@@ -15,7 +15,7 @@ class MongoDB:
         self.mongo_uri = mongo_uri
         self.db_name = db_name
 
-    def insertar(self, listaTrabajos, numeroTrabajosInsertados):
+    def insertar(self, listaTrabajos):
 
         if not listaTrabajos:  # Verificar si la lista de documentos está vacía
             print("No hay documentos para guardar.")
@@ -26,7 +26,6 @@ class MongoDB:
             collection = db["prueba"]
 
             collection.insert_many(listaTrabajos)
-            numeroTrabajosInsertados[0] += len(listaTrabajos)
             listaTrabajos.clear()
 
             client.close()
@@ -42,16 +41,19 @@ class MongoDB:
         collection.delete_many({})
         logging.info("Datos borrados correctamente")
 
-    def guardar_fechadescarga(self, id, numero_docs):
+    def guardar_fechadescarga(self, idCliente, num_procesados, num_importados, num_actualizados):
         fecha_actual = datetime.now()
 
         client = MongoClient(self.mongo_uri)
         db = client[self.db_name]
         coleccion = db['fecha_descarga']
 
-        coleccion.insert_one({'fecha': fecha_actual,
-                              'id': id,
-                              'Documentos guardados': numero_docs})
+        coleccion.insert_one({'ClienteId': idCliente,
+                              'fecha': fecha_actual,
+                              'Documentos encontrados': num_procesados,
+                              'Documentos importados': num_importados,
+                              'Documentos actualizados': num_actualizados
+                              })
 
     def obtener_orcid_autor(self):
         client = MongoClient(self.mongo_uri)
@@ -106,27 +108,6 @@ class MongoDB:
     def compararRepetidosFecha(self, trabajoColeccion, diccionarioTrabajo):
         if 'updated_date' in trabajoColeccion["documento"] and 'updated_date' in diccionarioTrabajo:
             return trabajoColeccion["documento"]['updated_date'] != diccionarioTrabajo['updated_date']
-
-    def comprobar_orcid(self, orcid):
-        cliente = MongoClient(self.mongo_uri)
-        db = cliente[self.db_name]
-        coleccion = db["fecha_descarga"]
-
-        documento = coleccion.find_one({"id": orcid})
-
-        if documento:
-            return True
-        else:
-            return False
-
-    def obtener_fecha(self, orcid):
-        cliente = MongoClient(self.mongo_uri)
-        db = cliente[self.db_name]
-        coleccion = db["fecha_descarga"]
-
-        documento = coleccion.find_one({"id": orcid})
-        if documento:
-            return documento["fecha"]
 
     def obtener_ids_clientes(self):
         clienteMongo = MongoClient(self.mongo_uri)

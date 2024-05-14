@@ -20,6 +20,7 @@ class OpenALex:
         self.mongo = MongoDB(mongo_uri, db_name)
         self.cicloInserciones = 1000
         self.listaTrabajos = []
+        self.trabajosEncontrados = 0
         self.trabajosActualizados = 0
         self.numeroTrabajosInsertados = 0
 
@@ -39,6 +40,7 @@ class OpenALex:
             self.descarga_por_institucion(id["affiliationId"])
 
         self.descarga_por_autores(autores)
+        self.mongo.guardar_fechadescarga(idCliente, self.trabajosEncontrados, self.trabajosActualizados, self.numeroTrabajosInsertados)
 
     def descarga_por_institucion(self, idInstitucion):
         url = "https://api.openalex.org/works?filter=institutions.id:" + idInstitucion + "&page={}"
@@ -78,6 +80,10 @@ class OpenALex:
 
         numeroTotalPaginas = self.numero_Total_Paginas(urlpagina.format(1))
 
+        urlEncontrados = urlpagina.format(1)
+        dataEncontrados = requests.get(urlEncontrados).json()
+        self.trabajosEncontrados += dataEncontrados['meta']['count']
+
         for numeroPagina in range(1, numeroTotalPaginas + 1):
             try:
                 url = urlpagina.format(numeroPagina)
@@ -89,9 +95,10 @@ class OpenALex:
                 logging.error(f"Error al realizar la solicitud de la pagina {numeroPagina} : {e}")
                 continue
         if len(self.listaTrabajos) > 0:
-            self.mongo.insertar(self.listaTrabajos, self.numeroTrabajosInsertados)
+            self.numeroTrabajosInsertados += len(self.listaTrabajos)
+            self.mongo.insertar(self.listaTrabajos)
         logging.info(f"Trabajos procesados con id {id} : {totalTrabajosProcesados}")
-        self.mongo.guardar_fechadescarga(id, totalTrabajosProcesados)
+
 
 
     def recorrerInsertarTrabajos_porPagina(self, diccionario):
@@ -106,7 +113,8 @@ class OpenALex:
                 self.listaTrabajos.append(diccionarioFinal)
                 logging.info(f'work añadido a la lista con id: {trabajo["id"]}')
                 if len(self.listaTrabajos) >= self.cicloInserciones:
-                    self.mongo.insertar(self.listaTrabajos, self.numeroTrabajosInsertados)
+                    self.numeroTrabajosInsertados += len(self.listaTrabajos)
+                    self.mongo.insertar(self.listaTrabajos)
         return contadorTrabajosProcesados
 
 
