@@ -57,8 +57,7 @@ class OpenALex:
 
     def descarga_por_autores(self, autores):
 
-        listaIds = self.mongo.obtener_orcid_autor(autores)
-        for autor in listaIds:
+        for autor in autores:
             orcid = None
             for identificador in autor.get('identificadores', []):
                 if identificador.get('tipo') == "ORCID":
@@ -96,7 +95,6 @@ class OpenALex:
         for numeroPagina in range(1, numeroTotalPaginas + 1):
             try:
                 url = urlpagina.format(numeroPagina)
-                print('\n' + url)
                 data = requests.get(url).json()
                 resultados_pagina = json.loads(json.dumps(data['results']))
                 totalTrabajosProcesados += self.recorrerInsertarTrabajos_porPagina(resultados_pagina)

@@ -7,6 +7,7 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s',
                     filename=log_file,
                     filemode='a')
+logger = logging.getLogger('importar_documentos_OpenAlex')
 
 
 class MongoDB:
@@ -18,7 +19,6 @@ class MongoDB:
     def insertar(self, listaTrabajos):
 
         if not listaTrabajos:  # Verificar si la lista de documentos está vacía
-            print("No hay documentos para guardar.")
             return
         try:
             client = MongoClient(self.mongo_uri)
@@ -31,7 +31,7 @@ class MongoDB:
             client.close()
 
         except Exception as e:
-            print("Error")
+            logger.error(f"Error insertando la lista : {e}")
 
     def borrartodo(self, nombre_coleccion):
         client = MongoClient(self.mongo_uri)
@@ -39,7 +39,7 @@ class MongoDB:
         collection = db[nombre_coleccion]
 
         collection.delete_many({})
-        logging.info("Datos borrados correctamente")
+        logging.debug("Datos borrados correctamente")
 
     def guardar_fechadescarga(self, idCliente, num_procesados, num_importados, num_actualizados):
         fecha_actual = datetime.now()
@@ -55,28 +55,6 @@ class MongoDB:
                               'Documentos actualizados': num_actualizados
                               })
 
-    def obtener_orcid_autor(self):
-        client = MongoClient(self.mongo_uri)
-        db = client[self.db_name]
-        coleccion = db['configuraciones']
-
-        # Obtener el documento de configuraciones
-        documento_conf = coleccion.find_one({})
-
-        autores = {}
-        contador = 0
-
-        for autor in documento_conf.get("autores", []):
-            ids = {"ORCID": '', "SCP": ''}  # Reiniciar el diccionario de identificadores para cada autor
-            for identificador in autor.get("identificadores", []):
-                if identificador.get("tipo") == "ORCID":
-                    ids["ORCID"] = identificador.get("_id")
-                else:
-                    ids["SCP"] = identificador.get("_id")
-            autores[contador] = ids  # Agregar los identificadores al diccionario de autores
-            contador += 1
-
-        return autores
 
     def isRepetido(self, diccionarioTrabajo, trabajosActualizados):
         cliente = MongoClient(self.mongo_uri)
@@ -86,18 +64,17 @@ class MongoDB:
         documentos = coleccion.find({"documento.id": diccionarioTrabajo['id']})
 
         for trabajo in documentos:
-            print(self.compararRepetidosFecha(trabajo, diccionarioTrabajo))
             if not self.compararRepetidosFecha(trabajo, diccionarioTrabajo):
 
                 nuevaVersion = trabajo["version"] + 1
                 fechaModificacion = datetime.now()
                 coleccion.update_one({"_id": trabajo["_id"]}, {
                     "$set": {"documento": diccionarioTrabajo, "fechaModi": fechaModificacion, "version": nuevaVersion}})
-                logging.info(f'Trabajo actualizado con id: {trabajo["documento"]["id"]}')
+                logging.debug(f'Trabajo actualizado con id: {trabajo["documento"]["id"]}')
                 trabajosActualizados[0] += 1
                 return True
             else:
-                logging.info('Ya existe un trabajo identico')
+                logging.debug('Ya existe un trabajo identico')
                 cliente.close()
                 return True
         cliente.close()
@@ -122,12 +99,12 @@ class MongoDB:
             if clienteId not in listaIdClientesFechasOrdenadas:
                 cliente = coleccion.find_one({"clienteId": clienteId})
                 if cliente["enabled"] is True:
-                    listaId.append(cliente)
+                    listaId.append(cliente["clienteId"])
 
         for idCliente in listaIdClientesFechasOrdenadas:
             cliente = coleccion.find_one({"clienteId": idCliente})
             if cliente["enabled"] is True and self.comprobarFechaCliente(cliente):
-                listaId.append(cliente)
+                listaId.append(cliente["clienteId"])
 
         clienteMongo.close()
 
