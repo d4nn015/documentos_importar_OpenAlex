@@ -38,8 +38,9 @@ class OpenALex:
             logger.error(f"Limite de peticiones alcanzado : {err}")
 
 
+
     def descargarCliente(self, idCliente):
-        resultado = self.mongo.obtener_configuarion_cliente(idCliente)
+        resultado = self.mongo.obtener_configuracion_cliente(idCliente)
 
         afiliaciones, autores = resultado
 

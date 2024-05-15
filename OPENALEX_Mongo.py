@@ -148,7 +148,7 @@ class MongoDB:
 
         return ids_ordenados
 
-    def obtener_configuarion_cliente(self, idCliente):
+    def obtener_configuracion_cliente(self, idCliente):
         cliente = MongoClient(self.mongo_uri)
         db = cliente[self.db_name]
         coleccion = db['configuraciones']
