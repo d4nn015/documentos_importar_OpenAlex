@@ -157,7 +157,7 @@ class OpenALex:
 
         for trabajo in diccionario:
             contadorTrabajosProcesados += 1
-            if not self.mongo.isRepetido(trabajo, self.trabajosActualizados):
+            if not self.mongo.isRepetido(trabajo, self):
                 diccionarioFinal = {"documento": trabajo, "fechaCrea": datetime.now(),
                                     "fechaModi": datetime.now(), "version": 0}
                 self.listaTrabajos.append(diccionarioFinal)

@@ -58,7 +58,7 @@ class MongoDB:
                               })
 
 
-    def isRepetido(self, diccionarioTrabajo, trabajosActualizados):
+    def isRepetido(self, diccionarioTrabajo, clase_OpenAlex_documentos):
         cliente = MongoClient(self.mongo_uri)
         db = cliente[self.db_name]
         coleccion = db["documentos"]
@@ -73,7 +73,7 @@ class MongoDB:
                 coleccion.update_one({"_id": trabajo["_id"]}, {
                     "$set": {"documento": diccionarioTrabajo, "fechaModi": fechaModificacion, "version": nuevaVersion}})
                 logger.debug(f'Trabajo actualizado con id: {trabajo["documento"]["id"]}')
-                trabajosActualizados += 1
+                clase_OpenAlex_documentos.trabajosActualizados += 1
                 return True
             else:
                 logger.debug('Ya existe un trabajo identico')
