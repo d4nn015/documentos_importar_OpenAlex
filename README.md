@@ -58,25 +58,25 @@ Reconstruye el índice invertido de un resumen en un texto completo. Primero, cr
 Contiene la clase **MongoDB** que se encarga de las funciones que tienen que ver con la base de datos, en el constructor se le pasan la url de conexión y el nombre de la base de datos.
 
 
-### Método insertar
+### Método `insertar`
 Inserta los documentos de una lista en la colección *documentos*.
 
 
-### Método guardar_fecha_descarga
+### Método `guardar_fecha_descarga`
 
 Inserta un objeto en la colección *fecha_descarga* con la fecha actual, el id de un cliente y el número de sus documentos encontrados, insertados y actualizados.
 
 
-### Método isRepetido
+### Método `isRepetido`
 
 Comprueba si un documento existe en la colección mediante su id de OpenAlex, si existe y ha sido modificado en OpenAlex se actualiza.
 
 
-### Método obtener_configuracion_cliente
+### Método `obtener_configuracion_cliente`
 
 Obtiene las afiliaciones y los autores de un cliente.
 
 
-### Método obtener_ids_clientes
+### Método `obtener_ids_clientes`
 
 Obtiene una lista con ids de clientes que se pueden descargar, basándose en los campos *enabled* y *periodicidad* de los clientes. Los primeros de la lista serán los clientes nuevos y después en orden de los que mas llevan sin descargarse a los que menos.
