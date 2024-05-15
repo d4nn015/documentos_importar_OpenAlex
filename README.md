@@ -1,0 +1,54 @@
+# Documentos importar OpenAlex
+
+## OpenAlex_documentos
+
+Este script es una implementación de una clase, diseñado para gestionar la descarga y almacenamiento de documentos de OpenAlex en MongoDB. La clase `OpenAlex` facilita la interacción con la API de OpenAlex para obtener los documentos sobre las afiliaciones y autores de cada cliente. Y luego almacena esta información en MongoDB. En esta clase, se maneja la descarga de datos, el procesamiento y la inserción en la base de datos, además de registrar eventos y errores para el seguimiento y la resolución de problemas.
+
+### Método `descargar_todo`
+
+Es el método principal, el que inicia el proceso de descarga de documentos para todos los clientes registrados en la colección "configuraciones" en MongoDB. Obtiene una lista de IDs de los clientes cuya ultima fecha de descarga es mayor al periodo definido en su configuración y estén habilitados. Itera sobre cada id de cliente y llama al método `descargaCliente`.
+
+
+### Método `descarga_cliente`
+
+Este método maneja la descarga de documentos de un cliente en específico. Primero obtiene la configuración del cliente, códigos de las instituciones y autores, desde MongoDB y llama a los métodos de `descarga_por_institucion` y `descarga_por_autores`. Y por último, guarda la fecha de descarga del cliente y resetea los contadores.
+
+
+###  Método `descarga_por_institucion`
+
+El método descarga los documentos asociados a la institución pasada como parámetro "idInstitucion". Construye la url especifica para la institución utilizando su id y llama al método de `buscar_docs`.
+
+
+### Método `descarga_por_autores`
+
+El método descarga los documentos asociados a un cliente específico mediante el ORCID. De MongoDB, obtiene la lista de identificadores de los autores. Un autor puede tener ORCID o no. Itera sobre la lista, y si el autor tiene ORCID, construye la url y llama al método de `buscar_docs`. Si no tiene, intenta obtenerlo desde OpenAlex utilizando el identificador de Scopus, mediante el método `buscar_orcid_con_scopus`.
+
+
+### Método `buscar_orcid_con_scopus`
+
+Este método obtiene el identificador ORCID de un autor utilizando su identificador de Scopus. Construye la url y realiza una solicitud a la API de OpenAlex. Procesa la respuesta y devuelve el ORCID si se encuentra, o `None` si no se encuentra.
+
+
+### Método `buscar_docs`
+
+Este método realiza la búsqueda y descarga de documentos a partir de una url paginada. Primero calcula el número total de páginas de resultados utilizando el método `numero_Total_Paginas`. Luego, itera sobre el rango de páginas y realiza solicitudes para cada una. Obtiene el json y procesa los resultados llamando al método `recorrerInsertarTrabajos_porPagina`.Y por último, si queda documentos que no se hayan insertado, en el método `recorrerInsertarTrabajos_porPagina`, los inserta a MongoDB.
+
+
+### Método `comprobar_insertar_trabajosPorPagina`
+
+Este método procesa los documentos pasados por el método de `buscar_docs` como un diccionario y los inserta en MongoDB. Primero llama al método de `cambiar_resumen`. Luego itera sobre el diccionario y comprueba si el documento esta repetido, llamando  al método `isRepetido` de la clase OpenAlex_Mongo. Si no esta repetido, encapsula los datos para la nueva estructura y lo añade a la lista de trabajos a insertar. Inserta los trabajos en MongoDB cuando la lista alcanza el tamaño del ciclo de inserciones definido.
+
+
+### Método `numero_total_paginas`
+
+Este método calcula el número total de páginas de resultados para una búsqueda dada.
+
+
+### Método `cambiar_resumen`
+
+Este método reconstruye el resumen de los documentos en un formato legible. Itera sobre la lista de documentos y llama al método `reconstruir_abstract` para convertir el índice invertido en un texto completo, y lo reemplaza.
+
+
+### Método `reconstruir_abstract`
+
+Este método reconstruye el índice invertido de un resumen en un texto completo.Primero, crea una lista vacía para almacenar las palabras reconstruidas. Luego, itera sobre las claves y valores del índice invertido del resumen e inserta cada palabra en su posición correcta en la lista. Extiende la lista con espacios en blanco si la posición de la palabra está fuera del rango actual. Une las palabras reconstruidas en una cadena de texto. Y devuelve el texto reconstruido.
