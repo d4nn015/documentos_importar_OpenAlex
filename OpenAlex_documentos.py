@@ -20,7 +20,7 @@ class OpenALex:
             mongo_uri = config['DEFAULT']["Url_bd"]
             db_name = config['DEFAULT']["Nombre_bd"]
         self.mongo = MongoDB(mongo_uri, db_name)
-        self.cicloInserciones = 2
+        self.cicloInserciones = 1000
         self.listaTrabajos = []
         self.trabajosEncontrados = 0
         self.trabajosActualizados = 0

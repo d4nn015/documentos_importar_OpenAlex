@@ -25,7 +25,7 @@ class MongoDB:
         try:
             client = MongoClient(self.mongo_uri)
             db = client[self.db_name]
-            collection = db["prueba"]
+            collection = db["documentos"]
 
             collection.insert_many(listaTrabajos)
             listaTrabajos.clear()
