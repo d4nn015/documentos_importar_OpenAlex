@@ -95,7 +95,7 @@ class MongoDB:
 
     :param trabajoColeccion: Trabajo almacenado en la colección de MongoDB.
     :param diccionarioTrabajo: Trabajo a comparar.
-    :return: True si las fechas de actualización son diferentes, False si son iguales.
+    :return: True si las fechas de actualización son diferentes, False si son la misma.
     """
     def compararRepetidos_FechaActualizacion(self, trabajoColeccion, diccionarioTrabajo):
         if 'updated_date' in trabajoColeccion["documento"] and 'updated_date' in diccionarioTrabajo:
