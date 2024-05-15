@@ -60,7 +60,7 @@ class OpenALex:
             self.descarga_por_institucion(id["affiliationId"])
 
         self.descarga_por_autores(autores)
-        self.mongo.guardar_fechadescarga(idCliente, self.trabajosEncontrados, self.numeroTrabajosInsertados, self.trabajosActualizados)
+        self.mongo.guardar_fecha_descarga(idCliente, self.trabajosEncontrados, self.numeroTrabajosInsertados, self.trabajosActualizados)
 
         self.trabajosEncontrados = 0
         self.trabajosActualizados = 0

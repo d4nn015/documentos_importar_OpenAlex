@@ -51,7 +51,7 @@ class MongoDB:
         db = client[self.db_name]
         coleccion = db['fecha_descarga']
 
-        coleccion.insert_one({'ClienteId': idCliente,
+        coleccion.insert_one({'clienteId': idCliente,
                               'fecha': fecha_actual,
                               'Documentos encontrados': num_procesados,
                               'Documentos importados': num_importados,
