@@ -2,12 +2,14 @@ import json, os, logging, requests, math
 from datetime import datetime
 from OPENALEX_Mongo import MongoDB
 
-log_file = os.path.join(os.path.dirname(__file__), 'logs', 'logs_openAlex.log')
+log_file = os.path.join(os.path.dirname(__file__), 'logs', 'logs_openAlex_documentos.log')
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s',
                     filename=log_file,
                     filemode='a')
-logger = logging.getLogger('importar_documentos_OpenAlex')
+logger = logging.getLogger('importar_documentos_OpenAlex_documentos')
+loggerMongo = logging.getLogger('pymongo')
+loggerMongo.setLevel(logging.WARNING)
 
 
 class OpenALex:
@@ -18,7 +20,7 @@ class OpenALex:
             mongo_uri = config['DEFAULT']["Url_bd"]
             db_name = config['DEFAULT']["Nombre_bd"]
         self.mongo = MongoDB(mongo_uri, db_name)
-        self.cicloInserciones = 1000
+        self.cicloInserciones = 2
         self.listaTrabajos = []
         self.trabajosEncontrados = 0
         self.trabajosActualizados = 0

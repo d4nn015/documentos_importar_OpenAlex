@@ -2,13 +2,15 @@ from pymongo import MongoClient
 from datetime import datetime, timedelta
 import os, logging
 
-log_file = os.path.join(os.path.dirname(__file__), 'logs', 'logs_openAlex.log')
+log_file = os.path.join(os.path.dirname(__file__), 'logs', 'logs_openAlex_mongo.log')
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s',
                     filename=log_file,
                     filemode='a')
-logger = logging.getLogger('importar_documentos_OpenAlex')
-
+logger = logging.getLogger('importar_documentos_OpenAlex_mongo')
+logger.setLevel(logging.WARNING)
+loggerMongo = logging.getLogger('pymongo')
+loggerMongo.setLevel(logging.WARNING)
 
 class MongoDB:
 
@@ -18,7 +20,7 @@ class MongoDB:
 
     def insertar(self, listaTrabajos):
 
-        if not listaTrabajos:  # Verificar si la lista de documentos está vacía
+        if not listaTrabajos:
             return
         try:
             client = MongoClient(self.mongo_uri)
@@ -39,7 +41,7 @@ class MongoDB:
         collection = db[nombre_coleccion]
 
         collection.delete_many({})
-        logging.debug("Datos borrados correctamente")
+        logger.debug("Datos borrados correctamente")
 
     def guardar_fechadescarga(self, idCliente, num_procesados, num_importados, num_actualizados):
         fecha_actual = datetime.now()
@@ -70,18 +72,18 @@ class MongoDB:
                 fechaModificacion = datetime.now()
                 coleccion.update_one({"_id": trabajo["_id"]}, {
                     "$set": {"documento": diccionarioTrabajo, "fechaModi": fechaModificacion, "version": nuevaVersion}})
-                logging.debug(f'Trabajo actualizado con id: {trabajo["documento"]["id"]}')
-                trabajosActualizados[0] += 1
+                logger.debug(f'Trabajo actualizado con id: {trabajo["documento"]["id"]}')
+                trabajosActualizados += 1
                 return True
             else:
-                logging.debug('Ya existe un trabajo identico')
+                logger.debug('Ya existe un trabajo identico')
                 cliente.close()
                 return True
         cliente.close()
 
         return False
 
-    # Compara un objeto de la coleccion y un diccionario de un trabajo, con el mismo id, si el campo "updated_date" es distinto devuelve true y si no false
+
     def compararRepetidosFecha(self, trabajoColeccion, diccionarioTrabajo):
         if 'updated_date' in trabajoColeccion["documento"] and 'updated_date' in diccionarioTrabajo:
             return trabajoColeccion["documento"]['updated_date'] != diccionarioTrabajo['updated_date']
