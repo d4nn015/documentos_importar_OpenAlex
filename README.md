@@ -2,7 +2,7 @@
 
 ## OpenAlex_documentos
 
-Este script es una implementación de una clase, diseñado para gestionar la descarga y almacenamiento de documentos de OpenAlex en MongoDB. La clase `OpenAlex` facilita la interacción con la API de OpenAlex para obtener los documentos sobre las afiliaciones y autores de cada cliente. Y luego almacena esta información en MongoDB. En esta clase, se maneja la descarga de datos, el procesamiento y la inserción en la base de datos, además de registrar eventos y errores para el seguimiento y la resolución de problemas.
+Implementa una clase, diseñado para gestionar la descarga y almacenamiento de documentos de OpenAlex en MongoDB. La clase `OpenAlex` facilita la interacción con la API de OpenAlex para obtener los documentos sobre las afiliaciones y autores de cada cliente. Y luego almacena esta información en MongoDB. En esta clase, se maneja la descarga de datos, el procesamiento y la inserción en la base de datos, además de registrar eventos y errores para el seguimiento y la resolución de problemas.
 
 ### Método `descargar_todo`
 
