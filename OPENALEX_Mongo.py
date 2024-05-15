@@ -61,7 +61,7 @@ class MongoDB:
     def isRepetido(self, diccionarioTrabajo, trabajosActualizados):
         cliente = MongoClient(self.mongo_uri)
         db = cliente[self.db_name]
-        coleccion = db["prueba"]
+        coleccion = db["documentos"]
 
         documentos = coleccion.find({"documento.id": diccionarioTrabajo['id']})
 
