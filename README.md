@@ -62,7 +62,7 @@ Contiene la clase **MongoDB** que se encarga de las funciones que tienen que ver
 Inserta los documentos de una lista en la colección *documentos*.
 
 
-### Método guardar_fechadescarga
+### Método guardar_fecha_descarga
 
 Inserta un objeto en la colección *fecha_descarga* con la fecha actual, el id de un cliente y el número de sus documentos encontrados, insertados y actualizados.
 
