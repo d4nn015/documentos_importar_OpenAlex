@@ -35,7 +35,7 @@ class OpenALex:
         try:
             for id in clientes_ids:
                 logger.info(f"Descargando cliente con id : {id}")
-                self.descarga_cliente(id)
+                self._descarga_cliente(id)
         except requests.exceptions.HTTPError as err:
             logger.error(f"Limite de peticiones alcanzado : {err}")
 
@@ -45,15 +45,15 @@ class OpenALex:
     
     :param idCliente: ID del cliente a descargar.
     """
-    def descarga_cliente(self, idCliente):
+    def _descarga_cliente(self, idCliente):
         resultado = self.mongo.obtener_configuracion_cliente(idCliente)
 
         afiliaciones, autores = resultado
 
         for id in afiliaciones:
-            self.descarga_por_institucion(id["affiliationId"])
+            self._descarga_por_institucion(id["affiliationId"])
 
-        self.descarga_por_autores(autores)
+        self._descarga_por_autores(autores)
         self.mongo.guardar_fecha_descarga(idCliente, self.trabajosEncontrados, self.numeroTrabajosInsertados, self.trabajosActualizados)
 
         self.trabajosEncontrados = 0
@@ -65,15 +65,15 @@ class OpenALex:
     
     :param idInstitucion: Id de la institución.
     """
-    def descarga_por_institucion(self, idInstitucion):
-        self.buscar_docs(idInstitucion, 0)
+    def _descarga_por_institucion(self, idInstitucion):
+        self._buscar_docs(idInstitucion, 0)
 
     """
     Descarga documentos de cada autor, asociados al cliente.
        
     :param autores: Lista de autores.
     """
-    def descarga_por_autores(self, autores):
+    def _descarga_por_autores(self, autores):
 
         for autor in autores:
             orcid = None
@@ -83,11 +83,11 @@ class OpenALex:
                     break
                 elif identificador.get('tipo') == "SCP":
                     scopus_id = identificador.get('_id')
-                    orcid = self.buscar_orcid_con_scopus(scopus_id)
+                    orcid = self._buscar_orcid_con_scopus(scopus_id)
                     break
 
             if orcid:
-                self.buscar_docs(orcid, 1)
+                self._buscar_docs(orcid, 1)
 
     """
     Busca el identificador ORCID de un autor utilizando su identificador Scopus.
@@ -95,7 +95,7 @@ class OpenALex:
     :param idScopus: Id de Scopus del autor.
     :return: ORCID del autor o None si no se encuentra.
     """
-    def buscar_orcid_con_scopus(self, idScopus):
+    def _buscar_orcid_con_scopus(self, idScopus):
         data = OpenAlex_acceso.url_BuscarAutor_Scopus(idScopus)
         for autor in data['results']:
             if autor is None:
@@ -111,7 +111,7 @@ class OpenALex:
     :param id: Id de la institución o autor para el registro en el log.
     :param tipo: Si es 0 sera el id de una institución, si es 1 el orcid de un autor
     """
-    def buscar_docs(self, id, tipo):
+    def _buscar_docs(self, id, tipo):
 
         totalTrabajosProcesados = 0
 
@@ -120,7 +120,7 @@ class OpenALex:
         else:
             data = OpenAlex_acceso.url_TrabajosAutor(id, 1)
 
-        numeroTotalPaginas = self.numero_total_paginas(data)
+        numeroTotalPaginas = self._numero_total_paginas(data)
 
         encontrados = json.loads(json.dumps(data['meta']['count']))
         self.trabajosEncontrados += encontrados
@@ -132,7 +132,7 @@ class OpenALex:
                 else:
                     dataTrabajos = OpenAlex_acceso.url_TrabajosAutor(id, numeroPagina)
                 resultados_pagina = json.loads(json.dumps(dataTrabajos['results']))
-                totalTrabajosProcesados += self.comprobar_insertar_trabajosPorPagina(resultados_pagina)
+                totalTrabajosProcesados += self._comprobar_insertar_trabajosPorPagina(resultados_pagina)
             except requests.exceptions.RequestException as e:
                 logger.error(f"Error al realizar la solicitud de la pagina {numeroPagina} : {e}")
                 continue
@@ -148,9 +148,9 @@ class OpenALex:
     :param diccionario: Diccionario con los documentos a procesar.
     :return: Número de trabajos procesados en la página.
     """
-    def comprobar_insertar_trabajosPorPagina(self, diccionario):
+    def _comprobar_insertar_trabajosPorPagina(self, diccionario):
         contadorTrabajosProcesados = 0
-        self.cambiar_resumen(diccionario)
+        self._cambiar_resumen(diccionario)
 
         for trabajo in diccionario:
             contadorTrabajosProcesados += 1
@@ -170,7 +170,7 @@ class OpenALex:
    :param data: resultado de una peticion a la API de OpenAlex.
    :return: Número total de páginas.
    """
-    def numero_total_paginas(self, data):
+    def _numero_total_paginas(self, data):
 
         totalTrabajos = int(data['meta']['count'])
 
@@ -182,10 +182,10 @@ class OpenALex:
     
     :param documentos: Lista de documentos con índices invertidos en sus resúmenes.
     """
-    def cambiar_resumen(self, documentos):
+    def _cambiar_resumen(self, documentos):
         for documento in documentos:
             texto = documento.get("abstract_inverted_index")
-            texto_reconstruido = self.reconstruir_abstract(texto)
+            texto_reconstruido = self._reconstruir_abstract(texto)
             documento["abstract_inverted_index"] = texto_reconstruido
 
     """
@@ -194,7 +194,7 @@ class OpenALex:
     :param resumen: Abstract_inverted_index del documento.
     :return: Texto completo reconstruido.
     """
-    def reconstruir_abstract(self, resumen):
+    def _reconstruir_abstract(self, resumen):
         # Crear una lista vacía para almacenar las palabras reconstruidas
         texto_reconstruido = []
 

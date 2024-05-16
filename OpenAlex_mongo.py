@@ -69,7 +69,7 @@ class MongoDB:
         documentos = coleccion.find({"documento.id": diccionarioTrabajo['id']})
 
         for trabajo in documentos:
-            if not self.compararRepetidos_FechaActualizacion(trabajo, diccionarioTrabajo):
+            if not self._compararRepetidos_FechaActualizacion(trabajo, diccionarioTrabajo):
 
                 nuevaVersion = trabajo["version"] + 1
                 fechaModificacion = datetime.now()
@@ -93,7 +93,7 @@ class MongoDB:
     :param diccionarioTrabajo: Trabajo a comparar.
     :return: True si las fechas de actualización son diferentes, False si son la misma.
     """
-    def compararRepetidos_FechaActualizacion(self, trabajoColeccion, diccionarioTrabajo):
+    def _compararRepetidos_FechaActualizacion(self, trabajoColeccion, diccionarioTrabajo):
         if 'updated_date' in trabajoColeccion["documento"] and 'updated_date' in diccionarioTrabajo:
             return trabajoColeccion["documento"]['updated_date'] != diccionarioTrabajo['updated_date']
 
@@ -108,7 +108,7 @@ class MongoDB:
         coleccion = db['configuraciones']
         listaId = []
 
-        listaIdClientesFechasOrdenadas = self.listaIdClientes_OrdenadosPorFecha()
+        listaIdClientesFechasOrdenadas = self._listaIdClientes_OrdenadosPorFecha()
         listaIdClientes = [doc['clienteId'] for doc in coleccion.find()]
 
         for clienteId in listaIdClientes:
@@ -119,7 +119,7 @@ class MongoDB:
 
         for idCliente in listaIdClientesFechasOrdenadas:
             cliente = coleccion.find_one({"clienteId": idCliente})
-            if cliente["enabled"] is True and self.comprobar_FechaCliente(cliente):
+            if cliente["enabled"] is True and self._comprobar_FechaCliente(cliente):
                 listaId.append(cliente["clienteId"])
 
         clienteMongo.close()
@@ -131,7 +131,7 @@ class MongoDB:
 
     :return: True si han pasado los dias establecidos
     """
-    def comprobar_FechaCliente(self, cliente):
+    def _comprobar_FechaCliente(self, cliente):
         clienteMongo = MongoClient(self.mongo_uri)
         bd = clienteMongo[self.db_name]
         coleccionFechas = bd["fecha_descarga"]
@@ -144,7 +144,7 @@ class MongoDB:
 
     :return: Lista única sin elementos duplicados.
     """
-    def eliminar_repetidos_listaClientes(self, lista):
+    def _eliminar_repetidos_listaClientes(self, lista):
         # Creamos un diccionario para almacenar el ID y su posición más baja
         id_posiciones = {}
         for i, id in enumerate(lista):
@@ -162,7 +162,7 @@ class MongoDB:
     """
     Obtiene los IDs de clientes ordenados por fecha de descarga.
     """
-    def listaIdClientes_OrdenadosPorFecha(self):
+    def _listaIdClientes_OrdenadosPorFecha(self):
         clienteMongo = MongoClient(self.mongo_uri)
         db = clienteMongo[self.db_name]
         coleccionFecha = db["fecha_descarga"]
@@ -173,7 +173,7 @@ class MongoDB:
 
         clienteMongo.close()
 
-        return self.eliminar_repetidos_listaClientes(ids_ordenados)
+        return self._eliminar_repetidos_listaClientes(ids_ordenados)
 
     """
     Obtiene las afiliaciones y autores de un cliente en específico.
