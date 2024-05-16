@@ -115,7 +115,7 @@ class OpenALex:
 
         totalTrabajosProcesados = 0
 
-        if tipo is 0:
+        if tipo == 0:
             data = OpenAlex_acceso.url_TrabajosInstitucion(id, 1)
         else:
             data = OpenAlex_acceso.url_TrabajosAutor(id, 1)
@@ -127,7 +127,7 @@ class OpenALex:
 
         for numeroPagina in range(1, numeroTotalPaginas + 1):
             try:
-                if tipo is 0:
+                if tipo == 0:
                     dataTrabajos = OpenAlex_acceso.url_TrabajosInstitucion(id, numeroPagina)
                 else:
                     dataTrabajos = OpenAlex_acceso.url_TrabajosAutor(id, numeroPagina)
