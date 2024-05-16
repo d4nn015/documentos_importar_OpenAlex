@@ -1,16 +1,10 @@
-import json, os, logging, requests, math
+import json, requests, math
 from datetime import datetime
 from OPENALEX_Mongo import MongoDB
+import logging.config
 
-log_file = os.path.join(os.path.dirname(__file__), 'logs', 'logs_openAlex_documentos.log')
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(message)s',
-                    filename=log_file,
-                    filemode='a')
-logger = logging.getLogger('importar_documentos_OpenAlex_documentos')
-loggerMongo = logging.getLogger('pymongo')
-loggerMongo.setLevel(logging.WARNING)
-
+logging.config.fileConfig('logging.ini')
+logger = logging.getLogger('documentos_importar_OpenAlex')
 
 class OpenALex:
     """
@@ -18,11 +12,7 @@ class OpenALex:
     estableciendo la conexión a MongoDB y definiendo los contadores, la lista de documentos y el ciclo de operaciones.
     """
     def __init__(self):
-        with open('config.json', 'r') as file:
-            config = json.load(file)
-            mongo_uri = config['DEFAULT']["Url_bd"]
-            db_name = config['DEFAULT']["Nombre_bd"]
-        self.mongo = MongoDB(mongo_uri, db_name)
+        self.mongo = MongoDB()
         self.cicloInserciones = 1000
         self.listaTrabajos = []
         self.trabajosEncontrados = 0

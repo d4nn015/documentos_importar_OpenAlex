@@ -1,25 +1,21 @@
+import json
 from pymongo import MongoClient
 from datetime import datetime, timedelta
-import os, logging
+import logging.config
 
-log_file = os.path.join(os.path.dirname(__file__), 'logs', 'logs_openAlex_mongo.log')
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(message)s',
-                    filename=log_file,
-                    filemode='a')
-logger = logging.getLogger('importar_documentos_OpenAlex_mongo')
-logger.setLevel(logging.WARNING)
-loggerMongo = logging.getLogger('pymongo')
-loggerMongo.setLevel(logging.WARNING)
+logging.config.fileConfig('logging.ini')
+logger = logging.getLogger('documentos_importar_OpenAlex_mongo')
 
 class MongoDB:
 
     """
     Inicializa la conexion con mongoDB
     """
-    def __init__(self, mongo_uri, db_name):
-        self.mongo_uri = mongo_uri
-        self.db_name = db_name
+    def __init__(self):
+        with open('config.json', 'r') as file:
+            config = json.load(file)
+            self.mongo_uri = config['DEFAULT']["Url_bd"]
+            self.db_name = config['DEFAULT']["Nombre_bd"]
 
     """
     Inserta una lista de trabajos en la base de datos.
