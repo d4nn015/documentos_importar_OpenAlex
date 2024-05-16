@@ -1,7 +1,11 @@
 import json, requests, math
 from datetime import datetime
-from OPENALEX_Mongo import MongoDB
+
+
+from OpenAlex_mongo import MongoDB
 import logging.config
+
+from OpenAlex_acceso import OpenAlex_acceso
 
 logging.config.fileConfig('logging.ini')
 logger = logging.getLogger('documentos_importar_OpenAlex')
@@ -62,8 +66,7 @@ class OpenALex:
     :param idInstitucion: Id de la institución.
     """
     def descarga_por_institucion(self, idInstitucion):
-        url = "https://api.openalex.org/works?filter=institutions.id:" + idInstitucion + "&page={}"
-        self.buscar_docs(url, idInstitucion)
+        self.buscar_docs(idInstitucion, 0)
 
     """
     Descarga documentos de cada autor, asociados al cliente.
@@ -84,8 +87,7 @@ class OpenALex:
                     break
 
             if orcid:
-                url = "https://api.openalex.org/works?filter=author.orcid:" + orcid + "&page={}"
-                self.buscar_docs(url, orcid)
+                self.buscar_docs(orcid, 1)
 
     """
     Busca el identificador ORCID de un autor utilizando su identificador Scopus.
@@ -94,8 +96,7 @@ class OpenALex:
     :return: ORCID del autor o None si no se encuentra.
     """
     def buscar_orcid_con_scopus(self, idScopus):
-        url = f'https://api.openalex.org/authors?filter=scopus:{idScopus}'
-        data = requests.get(url).json()
+        data = OpenAlex_acceso.url_BuscarAutor_Scopus(idScopus)
         for autor in data['results']:
             if autor is None:
                 logger.debug(f"No se encontró ORCID para el codigo Scopus:{idScopus}")
@@ -104,27 +105,33 @@ class OpenALex:
                 return autor['orcid']
 
     """
-    Realiza la búsqueda y descarga de documentos a partir de una URL paginada.
+    Realiza la búsqueda y descarga de documentos de una institución o autor.
     Procesa los resultados e inserta los documentos en MongoDB.
     
-    :param urlpagina: URL para la búsqueda de documentos con paginación.
     :param id: Id de la institución o autor para el registro en el log.
+    :param tipo: Si es 0 sera el id de una institución, si es 1 el orcid de un autor
     """
-    def buscar_docs(self, urlpagina, id):
+    def buscar_docs(self, id, tipo):
+
         totalTrabajosProcesados = 0
 
-        numeroTotalPaginas = self.numero_total_paginas(urlpagina.format(1))
+        if tipo is 0:
+            data = OpenAlex_acceso.url_TrabajosInstitucion(id, 1)
+        else:
+            data = OpenAlex_acceso.url_TrabajosAutor(id, 1)
 
-        urlEncontrados = urlpagina.format(1)
-        dataEncontrados = requests.get(urlEncontrados).json()
-        encontrados = json.loads(json.dumps(dataEncontrados['meta']['count']))
+        numeroTotalPaginas = self.numero_total_paginas(data)
+
+        encontrados = json.loads(json.dumps(data['meta']['count']))
         self.trabajosEncontrados += encontrados
 
         for numeroPagina in range(1, numeroTotalPaginas + 1):
             try:
-                url = urlpagina.format(numeroPagina)
-                data = requests.get(url).json()
-                resultados_pagina = json.loads(json.dumps(data['results']))
+                if tipo is 0:
+                    dataTrabajos = OpenAlex_acceso.url_TrabajosInstitucion(id, numeroPagina)
+                else:
+                    dataTrabajos = OpenAlex_acceso.url_TrabajosAutor(id, numeroPagina)
+                resultados_pagina = json.loads(json.dumps(dataTrabajos['results']))
                 totalTrabajosProcesados += self.comprobar_insertar_trabajosPorPagina(resultados_pagina)
             except requests.exceptions.RequestException as e:
                 logger.error(f"Error al realizar la solicitud de la pagina {numeroPagina} : {e}")
@@ -160,11 +167,10 @@ class OpenALex:
     """
    Calcula el número total de páginas de resultados para una búsqueda.
    
-   :param url: URL para la búsqueda.
+   :param data: resultado de una peticion a la API de OpenAlex.
    :return: Número total de páginas.
    """
-    def numero_total_paginas(self, url):
-        data = requests.get(url).json()
+    def numero_total_paginas(self, data):
 
         totalTrabajos = int(data['meta']['count'])
 
