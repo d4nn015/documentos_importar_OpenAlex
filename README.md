@@ -2,7 +2,7 @@
 
 ## OpenAlex_documentos
 
-Implementa una clase, diseñado para gestionar la descarga y almacenamiento de documentos de OpenAlex en MongoDB. La clase `OpenAlex` facilita la interacción con la API de OpenAlex para obtener los documentos sobre las afiliaciones y autores de cada cliente que luego almacena en MongoDB. En esta clase, se maneja la descarga de datos, el procesamiento y la inserción en la base de datos, además de registrar eventos y errores para el seguimiento y la resolución de problemas.
+Implementa una clase, diseñado para gestionar la descarga y almacenamiento de documentos de OpenAlex en MongoDB. La clase **OpenAlex** facilita la interacción con la API de OpenAlex para obtener los documentos sobre las afiliaciones y autores de cada cliente que luego almacena en MongoDB. En esta clase, se maneja la descarga de datos, el procesamiento y la inserción en la base de datos, además de registrar eventos y errores para el seguimiento y la resolución de problemas.
 
 ### Método `descargar_todo`
 
@@ -83,6 +83,8 @@ Obtiene una lista con ids de clientes que se pueden descargar, basándose en los
 
 ---
 ## OpenAlex_acceso
+
+Contiene la clase **OpenAlex_acceso** que se encarga de hacer la petición a OpenAlex y devuelve los resultados.
 
 ### Método `url_TrabajosInstitucion`
 
