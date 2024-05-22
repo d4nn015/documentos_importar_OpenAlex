@@ -50,9 +50,9 @@ class MongoDB:
 
         client = MongoClient(self.mongo_uri)
         db = client[self.db_name]
-        coleccion = db['fecha']
+        coleccion = db['descargas']
 
-        coleccion.insert_one({'fecha': fecha_actual,
+        coleccion.insert_one({'fechaCrea': fecha_actual,
                               'configuracionId': configuracionId,
                               'clienteId': idCliente,
                               'documentosEncontrados': num_procesados,
@@ -144,7 +144,7 @@ class MongoDB:
     def _comprobar_FechaCliente(self, cliente):
         clienteMongo = MongoClient(self.mongo_uri)
         bd = clienteMongo[self.db_name]
-        coleccionFechas = bd["fecha"]
+        coleccionFechas = bd["descargas"]
         fechaCliente = coleccionFechas.find_one({"clienteId": cliente["clienteId"]})
         if (datetime.now() - fechaCliente["fecha"]) > timedelta(days=cliente["periodicidad"]):
             return True
@@ -175,7 +175,7 @@ class MongoDB:
     def _listaIdClientes_OrdenadosPorFecha(self):
         clienteMongo = MongoClient(self.mongo_uri)
         db = clienteMongo[self.db_name]
-        coleccionFecha = db["fecha"]
+        coleccionFecha = db["descargas"]
 
         resultados = coleccionFecha.find().sort("fecha", 1)
 
