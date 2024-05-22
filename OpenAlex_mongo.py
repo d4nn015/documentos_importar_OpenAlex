@@ -40,18 +40,28 @@ class MongoDB:
     """
     Registra la fecha de descarga, el id de un cliente y su número de documentos procesados, importados y actualizados.
     """
-    def guardar_fecha_descarga(self, idCliente, num_procesados, num_importados, num_actualizados):
+    def guardar_fecha_descarga(self, configuracionId, idCliente, num_procesados, num_importados, num_actualizados, num_erroneos, estado, resultMessage, tiempo):
         fecha_actual = datetime.now()
+
+        if estado == True:
+            estado = 'SUCCESS'
+        else:
+            estado = 'ERROR'
 
         client = MongoClient(self.mongo_uri)
         db = client[self.db_name]
-        coleccion = db['fecha_descarga']
+        coleccion = db['fecha']
 
-        coleccion.insert_one({'clienteId': idCliente,
-                              'fecha': fecha_actual,
-                              'Documentos encontrados': num_procesados,
-                              'Documentos importados': num_importados,
-                              'Documentos actualizados': num_actualizados
+        coleccion.insert_one({'fecha': fecha_actual,
+                              'configuracionId': configuracionId,
+                              'clienteId': idCliente,
+                              'documentosEncontrados': num_procesados,
+                              'documentosImportados': num_importados,
+                              'documentosActualizados': num_actualizados,
+                              'documentosErroneos': num_erroneos,
+                              'tiempo': tiempo,
+                              'estado': estado,
+                              'resultMessage': resultMessage,
                               })
 
     """
@@ -102,11 +112,11 @@ class MongoDB:
 
     :return: Lista de IDs de clientes.
     """
-    def obtener_ids_clientes(self):
+    def obtener_configuraciones(self):
         clienteMongo = MongoClient(self.mongo_uri)
         db = clienteMongo[self.db_name]
         coleccion = db['configuraciones']
-        listaId = []
+        listaConfiguraciones = []
 
         listaIdClientesFechasOrdenadas = self._listaIdClientes_OrdenadosPorFecha()
         listaIdClientes = [doc['clienteId'] for doc in coleccion.find()]
@@ -115,16 +125,16 @@ class MongoDB:
             if clienteId not in listaIdClientesFechasOrdenadas:
                 cliente = coleccion.find_one({"clienteId": clienteId})
                 if cliente["enabled"] is True:
-                    listaId.append(cliente["clienteId"])
+                    listaConfiguraciones.append(cliente)
 
         for idCliente in listaIdClientesFechasOrdenadas:
             cliente = coleccion.find_one({"clienteId": idCliente})
             if cliente["enabled"] is True and self._comprobar_FechaCliente(cliente):
-                listaId.append(cliente["clienteId"])
+                listaConfiguraciones.append(cliente)
 
         clienteMongo.close()
 
-        return listaId
+        return listaConfiguraciones
 
     """
     Comprueba si la fecha de descarga para un cliente ha superado su periodicidad establecida.
@@ -134,7 +144,7 @@ class MongoDB:
     def _comprobar_FechaCliente(self, cliente):
         clienteMongo = MongoClient(self.mongo_uri)
         bd = clienteMongo[self.db_name]
-        coleccionFechas = bd["fecha_descarga"]
+        coleccionFechas = bd["fecha"]
         fechaCliente = coleccionFechas.find_one({"clienteId": cliente["clienteId"]})
         if (datetime.now() - fechaCliente["fecha"]) > timedelta(days=cliente["periodicidad"]):
             return True
@@ -165,7 +175,7 @@ class MongoDB:
     def _listaIdClientes_OrdenadosPorFecha(self):
         clienteMongo = MongoClient(self.mongo_uri)
         db = clienteMongo[self.db_name]
-        coleccionFecha = db["fecha_descarga"]
+        coleccionFecha = db["fecha"]
 
         resultados = coleccionFecha.find().sort("fecha", 1)
 
@@ -175,17 +185,3 @@ class MongoDB:
 
         return self._eliminar_repetidos_listaClientes(ids_ordenados)
 
-    """
-    Obtiene las afiliaciones y autores de un cliente en específico.
-    """
-    def obtener_configuracion_cliente(self, idCliente):
-        cliente = MongoClient(self.mongo_uri)
-        db = cliente[self.db_name]
-        coleccion = db['configuraciones']
-
-        documento = coleccion.find_one({"clienteId": idCliente})
-
-        afiliaciones = documento["affiliations"]
-        autores = documento["autores"]
-
-        return afiliaciones, autores

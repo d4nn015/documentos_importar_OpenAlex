@@ -1,6 +1,6 @@
 import json, requests, math
 from datetime import datetime
-
+import time
 
 from OpenAlex_mongo import MongoDB
 import logging.config
@@ -22,6 +22,8 @@ class OpenALex:
         self.trabajosEncontrados = 0
         self.trabajosActualizados = 0
         self.numeroTrabajosInsertados = 0
+        self.trabajosErroneos = 0
+        self.inicio = 0
 
     """
     Descarga los datos de todos los clientes registrados en la base de datos.
@@ -30,14 +32,25 @@ class OpenALex:
     """
     def descargar_todo(self):
 
-        clientes_ids = self.mongo.obtener_ids_clientes()
+        configuraciones = self.mongo.obtener_configuraciones()
 
-        try:
-            for id in clientes_ids:
+        for configuracion in configuraciones:
+            id = configuracion['clienteId']
+            try:
                 logger.info(f"Descargando cliente con id : {id}")
-                self._descarga_cliente(id)
-        except requests.exceptions.HTTPError as err:
-            logger.error(f"Limite de peticiones alcanzado : {err}")
+                self._descarga_cliente(configuracion)
+            except requests.exceptions.HTTPError as err:
+                logger.error(f"Limite de peticiones alcanzado : {err}")
+                tiempo = time.time()-self.inicio
+                self.mongo.guardar_fecha_descarga(configuracion['_id'], id, self.trabajosEncontrados, self.numeroTrabajosInsertados, self.trabajosActualizados, self.trabajosErroneos, False, err, tiempo)
+                self._limpiar_Contadores()
+            except Exception as e:
+                logger.error({e})
+                tiempo = time.time()-self.inicio
+                self.mongo.guardar_fecha_descarga(configuracion['_id'], id, self.trabajosEncontrados, self.numeroTrabajosInsertados, self.trabajosActualizados, self.trabajosErroneos, False, e, tiempo)
+                self._limpiar_Contadores()
+                continue
+
 
     """
     Descarga los documentos de un cliente específico basándose en sus afiliaciones y autores.
@@ -45,20 +58,29 @@ class OpenALex:
     
     :param idCliente: ID del cliente a descargar.
     """
-    def _descarga_cliente(self, idCliente):
-        resultado = self.mongo.obtener_configuracion_cliente(idCliente)
+    def _descarga_cliente(self, configuracion):
+        self.inicio = time.time()
 
-        afiliaciones, autores = resultado
+        afiliaciones = configuracion["affiliations"]
+        autores = configuracion["autores"]
 
         for id in afiliaciones:
             self._descarga_por_institucion(id["affiliationId"])
 
         self._descarga_por_autores(autores)
-        self.mongo.guardar_fecha_descarga(idCliente, self.trabajosEncontrados, self.numeroTrabajosInsertados, self.trabajosActualizados)
 
+        tiempo = time.time()-self.inicio
+
+        self.mongo.guardar_fecha_descarga(configuracion['_id'], configuracion['clienteId'], self.trabajosEncontrados, self.numeroTrabajosInsertados, self.trabajosActualizados, self.trabajosErroneos, True, None, tiempo)
+
+        self._limpiar_Contadores()
+
+    def _limpiar_Contadores(self):
         self.trabajosEncontrados = 0
         self.trabajosActualizados = 0
         self.numeroTrabajosInsertados = 0
+        self.trabajosErroneos = 0
+        self.inicio = 0
 
     """
     Descarga documentos de una institución asociada al cliente.
@@ -134,7 +156,8 @@ class OpenALex:
                 resultados_pagina = json.loads(json.dumps(dataTrabajos['results']))
                 totalTrabajosProcesados += self._comprobar_insertar_trabajosPorPagina(resultados_pagina)
             except requests.exceptions.RequestException as e:
-                logger.error(f"Error al realizar la solicitud de la pagina {numeroPagina} : {e}")
+                logger.error(f"Error en la configuracion con id {id} al realizar la solicitud de la pagina {numeroPagina} : {e}")
+                self.trabajosErroneos += 25
                 continue
         if len(self.listaTrabajos) > 0:
             self.numeroTrabajosInsertados += len(self.listaTrabajos)
