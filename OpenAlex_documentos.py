@@ -38,7 +38,7 @@ class OpenALex:
             id = configuracion['clienteId']
             try:
                 logger.info(f"Descargando cliente con id : {id}")
-                self._descarga_cliente(configuracion)
+                self._descarga_configuracion(configuracion)
             except requests.exceptions.HTTPError as err:
                 logger.error(f"Limite de peticiones alcanzado : {err}")
                 tiempo = time.time()-self.inicio
@@ -58,7 +58,7 @@ class OpenALex:
     
     :param idCliente: ID del cliente a descargar.
     """
-    def _descarga_cliente(self, configuracion):
+    def _descarga_configuracion(self, configuracion):
         self.inicio = time.time()
 
         afiliaciones = configuracion["affiliations"]
