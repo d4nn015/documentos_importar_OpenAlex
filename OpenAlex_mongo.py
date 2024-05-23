@@ -53,6 +53,7 @@ class MongoDB:
         coleccion = db['descargas']
 
         coleccion.insert_one({'fechaCrea': fecha_actual,
+                              'fechaModi': fecha_actual,
                               'configuracionId': configuracionId,
                               'clienteId': idCliente,
                               'documentosEncontrados': num_procesados,
@@ -146,7 +147,7 @@ class MongoDB:
         bd = clienteMongo[self.db_name]
         coleccionFechas = bd["descargas"]
         fechaCliente = coleccionFechas.find_one({"clienteId": cliente["clienteId"]})
-        if (datetime.now() - fechaCliente["fecha"]) > timedelta(days=cliente["periodicidad"]):
+        if (datetime.now() - fechaCliente["fechaCrea"]) > timedelta(days=cliente["periodicidad"]):
             return True
 
     """
@@ -177,7 +178,7 @@ class MongoDB:
         db = clienteMongo[self.db_name]
         coleccionFecha = db["descargas"]
 
-        resultados = coleccionFecha.find().sort("fecha", 1)
+        resultados = coleccionFecha.find().sort("fechaCrea", 1)
 
         ids_ordenados = [doc['clienteId'] for doc in resultados]
 
